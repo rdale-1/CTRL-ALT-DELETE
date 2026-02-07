@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineSearch - Movie Browser</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <div class="logo">CineSearch</div>
+            <nav>
+                <a href="#films">Films</a>
+                <a href="#lists">Lists</a>
+                <a href="#members">Members</a>
+                <a href="#journal">Journal</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Browse Section -->
+    <div class="browse-section">
+        <div class="browse-header">
+            <div class="browse-title">Browse By</div>
+        </div>
+        <div class="filters">
+            <button class="filter-btn">Year</button>
+            <button class="filter-btn">Rating</button>
+            <button class="filter-btn">Popular</button>
+            <button class="filter-btn">Genre</button>
+            <button class="filter-btn">Service</button>
+            <button class="filter-btn">Other</button>
+        </div>
+    </div>
+
+    <!-- Search -->
+    <div class="browse-section">
+        <form action="/search" method="get" class="search-container">
+            <input
+                type="text"
+                name="q"
+                class="search-input"
+                placeholder="Search for films..."
+            >
+        </form>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+    <div class="section-header">
+        <h2 class="section-title">
+            {% if request.args.get('q') %} 
+                Results for "{{ request.args.get('q') }}" 
+            {% else %} 
+                Popular This Week 
+            {% endif %}
+        </h2>
+    </div>
+
+    <div class="movie-grid">
+        {% if movies %}
+            {% for movie in movies %}
+            <div class="movie-card">
+                <img 
+                    src="{% if movie.poster_path %}https://image.tmdb.org/t/p/w500{{ movie.poster_path }}{% else %}https://via.placeholder.com/500x750?text=No+Poster+Available{% endif %}"
+                    alt="{{ movie.title }}"
+                    class="movie-poster"
+                >
+
+                <div class="movie-info">
+                    <h3 class="movie-title">{{ movie.title or 'Untitled' }}</h3>
+
+                    <div class="movie-meta">
+                        <div class="movie-stats">
+                            <span class="stat-icon">👁</span>
+                            <span class="stat-value">{{ (movie.popularity or 0) | round }}</span>
+                        </div>
+
+                        <div class="movie-stats">
+                            <span class="stat-icon">❤️</span>
+                            <span class="stat-value">{{ movie.vote_count or 0 }}</span>
+                        </div>
+
+                        {% if movie.vote_average %}
+                        <div class="rating-badge">
+                            {{ movie.vote_average }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-results">
+                <p>No movies found. Try a different search!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+    <script>
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Movie card click animation
+        document.querySelectorAll('.movie-card').forEach(card => {
+            card.addEventListener('click', function() {
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 200);
+            });
+        });
+
+        // Search input focus effect (safe for form)
+        const searchInput = document.querySelector('.search-input');
+        if (searchInput) {
+            searchInput.addEventListener('focus', function() {
+                this.closest('.search-container').style.transform = 'scale(1.02)';
+            });
+            searchInput.addEventListener('blur', function() {
+                this.closest('.search-container').style.transform = 'scale(1)';
+            });
+        }
+    </script>
+
+</body>
+</html>

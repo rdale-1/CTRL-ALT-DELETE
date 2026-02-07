@@ -1,0 +1,23 @@
+from flask import Flask, render_template, request
+import requests
+
+app = Flask(__name__)
+
+API_KEY = "74e31da2f676e1d01c863960d8abf982"
+BASE_URL = "https://api.themoviedb.org/3"
+
+@app.route("/")
+def home():
+    url = f"{BASE_URL}/trending/movie/week?api_key={API_KEY}"
+    data = requests.get(url).json()
+    return render_template("index.html", movies=data["results"])
+
+@app.route("/search")
+def search():
+    query = request.args.get("q")
+    url = f"{BASE_URL}/search/movie?api_key={API_KEY}&query={query}"
+    data = requests.get(url).json()
+    return render_template("index.html", movies=data["results"])
+
+if __name__ == "__main__":
+    app.run(debug=True)
