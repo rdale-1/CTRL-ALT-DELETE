@@ -13,20 +13,16 @@
 </head>
 <body>
 
-    <!-- Header -->
     <header>
         <div class="header-container">
             <div class="logo">CineSearch</div>
             <nav>
                 <a href="#films">Films</a>
                 <a href="#lists">Lists</a>
-                <a href="#members">Members</a>
-                <a href="#journal">Journal</a>
             </nav>
         </div>
     </header>
 
-    <!-- Browse Section -->
     <div class="browse-section">
         <div class="browse-header">
             <div class="browse-title">Browse By</div>
@@ -36,12 +32,9 @@
             <button class="filter-btn">Rating</button>
             <button class="filter-btn">Popular</button>
             <button class="filter-btn">Genre</button>
-            <button class="filter-btn">Service</button>
-            <button class="filter-btn">Other</button>
         </div>
     </div>
 
-    <!-- Search -->
     <div class="browse-section">
         <form action="/search" method="get" class="search-container">
             <input
@@ -49,62 +42,62 @@
                 name="q"
                 class="search-input"
                 placeholder="Search for films..."
+                value="{{ request.args.get('q', '') }}"
             >
         </form>
     </div>
 
-    <!-- Main Content -->
     <div class="main-content">
-    <div class="section-header">
-        <h2 class="section-title">
-            {% if request.args.get('q') %} 
-                Results for "{{ request.args.get('q') }}" 
-            {% else %} 
-                Popular This Week 
-            {% endif %}
-        </h2>
-    </div>
+        <div class="section-header">
+            <h2 class="section-title">
+                {% if request.args.get('q') %} 
+                    Results for "{{ request.args.get('q') }}" 
+                {% else %} 
+                    Popular This Week 
+                {% endif %}
+            </h2>
+        </div>
 
-    <div class="movie-grid">
-        {% if movies %}
-            {% for movie in movies %}
-            <div class="movie-card">
-                <img 
-                    src="{% if movie.poster_path %}https://image.tmdb.org/t/p/w500{{ movie.poster_path }}{% else %}https://via.placeholder.com/500x750?text=No+Poster+Available{% endif %}"
-                    alt="{{ movie.title }}"
-                    class="movie-poster"
-                >
+        <div class="movie-grid">
+            {% if movies %}
+                {% for movie in movies %}
+                <div class="movie-card">
+                    <img 
+                        src="{% if movie.poster_path %}https://image.tmdb.org/t/p/w500{{ movie.poster_path }}{% else %}https://via.placeholder.com/500x750?text=No+Poster+Available{% endif %}"
+                        alt="{{ movie.title }}"
+                        class="movie-poster"
+                    >
 
-                <div class="movie-info">
-                    <h3 class="movie-title">{{ movie.title or 'Untitled' }}</h3>
+                    <div class="movie-info">
+                        <h3 class="movie-title">{{ movie.title or 'Untitled' }}</h3>
 
-                    <div class="movie-meta">
-                        <div class="movie-stats">
-                            <span class="stat-icon">👁</span>
-                            <span class="stat-value">{{ (movie.popularity or 0) | round }}</span>
+                        <div class="movie-meta">
+                            <div class="movie-stats">
+                                <span class="stat-icon">👁</span>
+                                <span class="stat-value">{{ (movie.popularity or 0) | round }}</span>
+                            </div>
+
+                            <div class="movie-stats">
+                                <span class="stat-icon">❤️</span>
+                                <span class="stat-value">{{ movie.vote_count or 0 }}</span>
+                            </div>
+
+                            {% if movie.vote_average %}
+                            <div class="rating-badge">
+                                {{ movie.vote_average }}
+                            </div>
+                            {% endif %}
                         </div>
-
-                        <div class="movie-stats">
-                            <span class="stat-icon">❤️</span>
-                            <span class="stat-value">{{ movie.vote_count or 0 }}</span>
-                        </div>
-
-                        {% if movie.vote_average %}
-                        <div class="rating-badge">
-                            {{ movie.vote_average }}
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <div class="no-results">
-                <p>No movies found. Try a different search!</p>
-            </div>
-        {% endif %}
+                {% endfor %}
+            {% else %}
+                <div class="no-results">
+                    <p>No movies found. Try a different search!</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
-</div>
 
     <script>
         // Smooth scroll
@@ -128,7 +121,7 @@
             });
         });
 
-        // Search input focus effect (safe for form)
+        // Search input focus effect
         const searchInput = document.querySelector('.search-input');
         if (searchInput) {
             searchInput.addEventListener('focus', function() {
