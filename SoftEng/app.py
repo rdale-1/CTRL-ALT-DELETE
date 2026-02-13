@@ -1,7 +1,7 @@
 import os # Add this
 from flask import Flask, render_template, request
 import requests
-from dotenv import load_dotenv # Add this (make sure to run 'pip install python-dotenv' in your terminal)
+from dotenv import load_dotenv 
 
 # Load the .env file
 load_dotenv()
