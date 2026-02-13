@@ -1,14 +1,14 @@
-import os # Add this
+import os
 from flask import Flask, render_template, request
 import requests
 from dotenv import load_dotenv 
 
-# Load the .env file
+
 load_dotenv()
 
 app = Flask(__name__)
 
-# Change line 6 to this:
+
 API_KEY = os.getenv("TMDB_API_KEY")
 BASE_URL = "https://api.themoviedb.org/3"
 
