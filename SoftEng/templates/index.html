@@ -4,22 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CineSearch - Movie Browser</title>
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
 
     <header>
         <div class="header-container">
-            <div class="logo">CineSearch</div>
-            <nav>
-                <a href="#films">Films</a>
-                <a href="#lists">Lists</a>
-            </nav>
+            <a href="/" class="logo">CineSearch</a>
         </div>
     </header>
 
@@ -28,32 +22,133 @@
             <div class="browse-title">Browse By</div>
         </div>
         <div class="filters">
-            <button class="filter-btn">Year</button>
-            <button class="filter-btn">Rating</button>
-            <button class="filter-btn">Popular</button>
-            <button class="filter-btn">Genre</button>
+
+            <!-- YEAR -->
+            <div class="filter-dropdown-wrapper">
+                <button class="filter-btn {% if active_year %}filter-btn-active{% endif %}" id="yearBtn">
+                    {{ active_year if active_year else 'Year' }} ▾
+                </button>
+                <div class="filter-dropdown" id="yearDropdown">
+                    <div class="filter-grid col-4">
+                        {% for y in range(2026, 1969, -1) %}
+                        <a href="#" class="filter-item {% if active_year == y|string %}filter-active{% endif %}"
+                           data-param="year" data-value="{{ y }}">{{ y }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- RATING -->
+            <div class="filter-dropdown-wrapper">
+                <button class="filter-btn {% if active_rating %}filter-btn-active{% endif %}" id="ratingBtn">
+                    {{ active_rating + '+' if active_rating else 'Rating' }} ▾
+                </button>
+                <div class="filter-dropdown" id="ratingDropdown">
+                    <div class="filter-grid col-3">
+                        {% for r in ['9', '8', '7', '6', '5'] %}
+                        <a href="#" class="filter-item {% if active_rating == r %}filter-active{% endif %}"
+                           data-param="rating" data-value="{{ r }}">{{ r }}+</a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- POPULAR -->
+            <div class="filter-dropdown-wrapper">
+                <button class="filter-btn {% if active_popular %}filter-btn-active{% endif %}" id="popularBtn">
+                    {% if active_popular and popular_labels %}
+                        {{ popular_labels.get(active_popular, 'Popular') }}
+                    {% else %}Popular{% endif %} ▾
+                </button>
+                <div class="filter-dropdown" id="popularDropdown">
+                    <div class="filter-grid col-2">
+                        <a href="#" class="filter-item {% if active_popular == 'week' %}filter-active{% endif %}"
+                           data-param="popular" data-value="week">This Week</a>
+                        <a href="#" class="filter-item {% if active_popular == 'month' %}filter-active{% endif %}"
+                           data-param="popular" data-value="month">This Month</a>
+                        <a href="#" class="filter-item {% if active_popular == 'all-time' %}filter-active{% endif %}"
+                           data-param="popular" data-value="all-time">All Time</a>
+                        <a href="#" class="filter-item {% if active_popular == 'most-voted' %}filter-active{% endif %}"
+                           data-param="popular" data-value="most-voted">Most Voted</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GENRE -->
+            <div class="filter-dropdown-wrapper">
+                <button class="filter-btn {% if active_genre %}filter-btn-active{% endif %}" id="genreBtn">
+                    {{ active_genre_name if active_genre_name else 'Genre' }} ▾
+                </button>
+                <div class="filter-dropdown" id="genreDropdown">
+                    <div class="filter-grid col-3">
+                        {% for genre in genres %}
+                        <a href="#" class="filter-item {% if active_genre == genre.id|string %}filter-active{% endif %}"
+                           data-param="genre" data-value="{{ genre.id }}">{{ genre.name }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
         </div>
+
+        <!-- Active filter chips -->
+        {% if active_year or active_rating or active_popular or active_genre %}
+        <div class="active-chips">
+            {% if active_year %}
+            <a href="#" class="chip" data-remove="year">{{ active_year }} <span>×</span></a>
+            {% endif %} {% if active_rating %}
+            <a href="#" class="chip" data-remove="rating">{{ active_rating }}+ Stars <span>×</span></a>
+            {% endif %} {% if active_popular and popular_labels %}
+            <a href="#" class="chip" data-remove="popular">{{ popular_labels.get(active_popular, active_popular) }} <span>×</span></a>
+            {% endif %} {% if active_genre_name %}
+            <a href="#" class="chip" data-remove="genre">{{ active_genre_name }} <span>×</span></a>
+            {% endif %} <a href="/" class="chip chip-clear">Clear All</a>
+        </div>
+        {% endif %}
     </div>
 
-    <div class="browse-section">
+        <div class="browse-section">
         <form action="/search" method="get" class="search-container">
-            <input
-                type="text"
-                name="q"
-                class="search-input"
-                placeholder="Search for films..."
-                value="{{ request.args.get('q', '') }}"
-            >
+            <input type="text" id="searchInput" name="q" placeholder="Search movies..." class="search-input" autocomplete="off">
+            <div id="suggestions" class="suggestions-dropdown"></div>
+            <button type="button" id="randomBtn" class="random-btn">Movie Recommendation</button>
         </form>
     </div>
+
+    <!-- Bottom Pagination -->
+    {% if total_pages and total_pages > 1 %}
+    <div class="pagination">
+        {% if current_page > 1 %}
+            <a href="?page=1{% for key, value in request.args.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn pagination-first">First</a>
+            <a href="?page={{ current_page - 1 }}{% for key, value in request.args.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn pagination-prev">← Previous</a>
+        {% endif %}        
+        <div class="pagination-info">
+            Page <span class="current-page">{{ current_page }}</span> of <span class="total-pages">{{ total_pages }}</span>
+        </div>
+        {% if current_page < total_pages %}
+            <a href="?page={{ current_page + 1 }}{% for key, value in request.args.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn pagination-next">Next →</a>
+            <a href="?page={{ total_pages }}{% for key, value in request.args.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn pagination-last">Last</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Go to Top Button -->
+    <button id="goTopBtn" class="go-top-btn">↑ Top</button>
 
     <div class="main-content">
         <div class="section-header">
             <h2 class="section-title">
-                {% if request.args.get('q') %} 
-                    Results for "{{ request.args.get('q') }}" 
-                {% else %} 
-                    Popular This Week 
+                {% if active_year or active_rating or active_popular or active_genre %}
+                    {% set parts = [] %}
+                    {% if active_year %}{% set _ = parts.append(active_year) %}{% endif %}
+                    {% if active_rating %}{% set _ = parts.append(active_rating + '+ Stars') %}{% endif %}
+                    {% if active_popular and popular_labels %}{% set _ = parts.append(popular_labels.get(active_popular, '')) %}{% endif %}
+                    {% if active_genre_name %}{% set _ = parts.append(active_genre_name) %}{% endif %}
+                    {{ parts | join(' · ') }}
+                {% elif request.args.get('q') %}
+                    Results for "{{ request.args.get('q') }}"
+                {% else %}
+                    Popular This Week
                 {% endif %}
             </h2>
         </div>
@@ -62,30 +157,28 @@
             {% if movies %}
                 {% for movie in movies %}
                 <div class="movie-card">
-                    <img 
+                    <img
                         src="{% if movie.poster_path %}https://image.tmdb.org/t/p/w500{{ movie.poster_path }}{% else %}https://via.placeholder.com/500x750?text=No+Poster+Available{% endif %}"
                         alt="{{ movie.title }}"
                         class="movie-poster"
                     >
-
-                    <div class="movie-info">
+                                        <div class="movie-info">
                         <h3 class="movie-title">{{ movie.title or 'Untitled' }}</h3>
-
                         <div class="movie-meta">
+                            <div class="movie-stats">
+                                <span class="stat-icon">📅</span>
+                                <span class="stat-value">{{ movie.release_date[:4] if movie.release_date else 'N/A' }}</span>
+                            </div>
                             <div class="movie-stats">
                                 <span class="stat-icon">👁</span>
                                 <span class="stat-value">{{ (movie.popularity or 0) | round }}</span>
                             </div>
-
                             <div class="movie-stats">
                                 <span class="stat-icon">❤️</span>
                                 <span class="stat-value">{{ movie.vote_count or 0 }}</span>
                             </div>
-
                             {% if movie.vote_average %}
-                            <div class="rating-badge">
-                                {{ movie.vote_average }}
-                            </div>
+                            <div class="rating-badge">{{ movie.vote_average }}</div>
                             {% endif %}
                         </div>
                     </div>
@@ -93,44 +186,208 @@
                 {% endfor %}
             {% else %}
                 <div class="no-results">
-                    <p>No movies found. Try a different search!</p>
+                    <p>No movies found. Try adjusting your filters!</p>
                 </div>
             {% endif %}
         </div>
     </div>
 
     <script>
-        // Smooth scroll
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
+        // ─── Helpers ───────────────────────────────────────────────────────────
+        function getParams() {
+            return new URLSearchParams(window.location.search.slice(
+                window.location.pathname === '/browse' ? 0 : 0
+            ));
+        }
+
+        function buildBrowseUrl(params) {
+            const str = params.toString();
+            return str ? `/browse?${str}` : '/';
+        }
+
+        // Read current active params from URL
+        const currentParams = new URLSearchParams(window.location.search);
+
+        // ─── Filter item clicks ────────────────────────────────────────────────
+        document.querySelectorAll('.filter-item[data-param]').forEach(item => {
+            item.addEventListener('click', function(e) {
                 e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth' });
+                e.stopPropagation();
+                const param = this.dataset.param;
+                const value = this.dataset.value;
+                const newParams = new URLSearchParams(currentParams.toString());
+
+                // Toggle: clicking active value removes it
+                if (newParams.get(param) === value) {
+                    newParams.delete(param);
+                } else {
+                    newParams.set(param, value);
+                }
+
+                window.location.href = buildBrowseUrl(newParams);
+            });
+        });
+
+        // ─── Chip remove buttons ───────────────────────────────────────────────
+        document.querySelectorAll('.chip[data-remove]').forEach(chip => {
+            chip.addEventListener('click', function(e) {
+                e.preventDefault();
+                const param = this.dataset.remove;
+                const newParams = new URLSearchParams(currentParams.toString());
+                newParams.delete(param);
+                window.location.href = buildBrowseUrl(newParams);
+            });
+        });
+
+        // ─── Dropdown open/close ───────────────────────────────────────────────
+        const dropdownPairs = [
+            { btn: 'yearBtn',    dropdown: 'yearDropdown' },
+            { btn: 'ratingBtn',  dropdown: 'ratingDropdown' },
+            { btn: 'popularBtn', dropdown: 'popularDropdown' },
+            { btn: 'genreBtn',   dropdown: 'genreDropdown' },
+        ];
+
+        function closeAll() {
+            dropdownPairs.forEach(({ btn, dropdown }) => {
+                document.getElementById(dropdown)?.classList.remove('open');
+                document.getElementById(btn)?.classList.remove('btn-open');
+            });
+        }
+
+        dropdownPairs.forEach(({ btn, dropdown }) => {
+            const btnEl = document.getElementById(btn);
+            const dropEl = document.getElementById(dropdown);
+            if (!btnEl || !dropEl) return;
+
+            btnEl.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const isOpen = dropEl.classList.contains('open');
+                closeAll();
+                if (!isOpen) {
+                    dropEl.classList.add('open');
+                    btnEl.classList.add('btn-open');
+                    const active = dropEl.querySelector('.filter-active');
+                    if (active) setTimeout(() => active.scrollIntoView({ block: 'nearest' }), 350);
                 }
             });
         });
 
-        // Movie card click animation
+        document.addEventListener('click', closeAll);
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
+
+        // ─── Movie card animation ──────────────────────────────────────────────
         document.querySelectorAll('.movie-card').forEach(card => {
             card.addEventListener('click', function() {
                 this.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    this.style.transform = '';
-                }, 200);
+                setTimeout(() => { this.style.transform = ''; }, 200);
             });
         });
 
-        // Search input focus effect
-        const searchInput = document.querySelector('.search-input');
-        if (searchInput) {
-            searchInput.addEventListener('focus', function() {
-                this.closest('.search-container').style.transform = 'scale(1.02)';
+        // ─── Search focus ──────────────────────────────────────────────────────
+        const searchInput = document.getElementById('searchInput');
+        const suggestionsDiv = document.getElementById('suggestions');
+        
+        searchInput.addEventListener('focus', function() {
+            this.closest('.search-container').style.transform = 'scale(1.02)';
+        });
+        searchInput.addEventListener('blur', function() {
+            this.closest('.search-container').style.transform = 'scale(1)';
+        });
+
+        searchInput.addEventListener('input', async (e) => {
+            const query = e.target.value.trim();
+            
+            if (query.length < 2) {
+                suggestionsDiv.classList.remove('show');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/search-suggestions?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                suggestionsDiv.innerHTML = data.suggestions
+                    .map(movie => `
+                        <div class="suggestion-item" data-title="${movie.title}">
+                            <img src="https://image.tmdb.org/t/p/w92${movie.poster_path || ''}" alt="${movie.title}" class="suggestion-poster">
+                            <div class="suggestion-info">
+                                <div class="suggestion-title">${movie.title}</div>
+                                <div class="suggestion-meta">
+                                    <span>${movie.release_date?.substring(0, 4) || 'N/A'}</span>
+                                    <span class="suggestion-rating">⭐ ${movie.vote_average?.toFixed(1) || 'N/A'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `)
+                    .join('');
+                
+                suggestionsDiv.classList.add('show');
+                
+                // Click handler for suggestions
+                document.querySelectorAll('.suggestion-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const title = item.dataset.title;
+                        searchInput.value = title;
+                        suggestionsDiv.classList.remove('show');
+                        // Submit the search form
+                        searchInput.closest('.search-container').submit();
+                    });
+                });
+            } catch (error) {
+                console.error('Error fetching suggestions:', error);
+            }
+        });
+        
+        // ─── Random Movie Button ───────────────────────────────────────────
+        const randomBtn = document.getElementById('randomBtn');
+        
+        randomBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            randomBtn.disabled = true;
+            randomBtn.textContent = '⏳ Loading...';
+            
+            try {
+                const response = await fetch('/api/random-movie');
+                const data = await response.json();
+                
+                if (data.movie && data.movie.title) {
+                    searchInput.value = data.movie.title;
+                    suggestionsDiv.classList.remove('show');
+                    searchInput.closest('.search-container').submit();
+                }
+            } catch (error) {
+                console.error('Error fetching random movie:', error);
+                randomBtn.textContent = 'Random Movie';
+            } finally {
+                randomBtn.disabled = false;
+                randomBtn.textContent = ' Random Movie';
+            }
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target !== searchInput) {
+                suggestionsDiv.classList.remove('show');
+            }
+        });
+
+        // ─── Go to Top Button ───────────────────────────────────────────────
+        const goTopBtn = document.getElementById('goTopBtn');
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                goTopBtn.classList.add('show');
+            } else {
+                goTopBtn.classList.remove('show');
+            }
+        });
+
+        goTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
             });
-            searchInput.addEventListener('blur', function() {
-                this.closest('.search-container').style.transform = 'scale(1)';
-            });
-        }
+        });
     </script>
 
 </body>
