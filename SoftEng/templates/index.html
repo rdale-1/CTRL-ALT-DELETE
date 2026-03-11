@@ -126,6 +126,15 @@
     <button id="goTopBtn" class="go-top-btn">↑ Top</button>
 
     <div class="main-content">
+        {% if error %}
+        <div style="background: rgba(255, 107, 53, 0.1); border: 1px solid var(--accent-primary); color: var(--accent-primary); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; max-width: 1400px; margin-left: auto; margin-right: auto;">
+            <strong>⚠️ Error:</strong> {{ error }}
+            {% if 'not configured' in error %}
+            <p style="margin-top: 0.5rem; font-size: 0.9rem;">Please create a <code>.env</code> file in your SoftEng directory with: <code>TMDB_API_KEY=your_api_key_here</code></p>
+            {% endif %}
+        </div>
+        {% endif %}
+
         <div class="section-header">
             <h2 class="section-title">
                 {% if active_year or active_rating or active_popular or active_genre %}
@@ -146,33 +155,35 @@
         <div class="movie-grid">
             {% if movies %}
                 {% for movie in movies %}
-                <div class="movie-card">
-                    <img
-                        src="{% if movie.poster_path %}https://image.tmdb.org/t/p/w500{{ movie.poster_path }}{% else %}https://via.placeholder.com/500x750?text=No+Poster+Available{% endif %}"
-                        alt="{{ movie.title }}"
-                        class="movie-poster"
-                    >
-                                        <div class="movie-info">
-                        <h3 class="movie-title">{{ movie.title or 'Untitled' }}</h3>
-                        <div class="movie-meta">
-                            <div class="movie-stats">
-                                <span class="stat-icon">📅</span>
-                                <span class="stat-value">{{ movie.release_date[:4] if movie.release_date else 'N/A' }}</span>
+                <a href="/movie/{{ movie.id }}" class="movie-card-link">
+                    <div class="movie-card">
+                        <img
+                            src="{% if movie.poster_path %}https://image.tmdb.org/t/p/w500{{ movie.poster_path }}{% else %}https://via.placeholder.com/500x750?text=No+Poster+Available{% endif %}"
+                            alt="{{ movie.title }}"
+                            class="movie-poster"
+                        >
+                        <div class="movie-info">
+                            <h3 class="movie-title">{{ movie.title or 'Untitled' }}</h3>
+                            <div class="movie-meta">
+                                <div class="movie-stats">
+                                    <span class="stat-icon">📅</span>
+                                    <span class="stat-value">{{ movie.release_date[:4] if movie.release_date else 'N/A' }}</span>
+                                </div>
+                                <div class="movie-stats">
+                                    <span class="stat-icon">👁</span>
+                                    <span class="stat-value">{{ (movie.popularity or 0) | round }}</span>
+                                </div>
+                                <div class="movie-stats">
+                                    <span class="stat-icon">❤️</span>
+                                    <span class="stat-value">{{ movie.vote_count or 0 }}</span>
+                                </div>
+                                {% if movie.vote_average %}
+                                <div class="rating-badge">{{ movie.vote_average }}</div>
+                                {% endif %}
                             </div>
-                            <div class="movie-stats">
-                                <span class="stat-icon">👁</span>
-                                <span class="stat-value">{{ (movie.popularity or 0) | round }}</span>
-                            </div>
-                            <div class="movie-stats">
-                                <span class="stat-icon">❤️</span>
-                                <span class="stat-value">{{ movie.vote_count or 0 }}</span>
-                            </div>
-                            {% if movie.vote_average %}
-                            <div class="rating-badge">{{ movie.vote_average }}</div>
-                            {% endif %}
                         </div>
                     </div>
-                </div>
+                </a>
                 {% endfor %}
             {% else %}
                 <div class="no-results">

@@ -308,6 +308,12 @@ nav a:hover::after {
     }
 }
 
+.movie-card-link {
+    text-decoration: none;
+    display: block;
+    color: inherit;
+}
+
 .movie-card {
     background: var(--bg-card);
     border-radius: 12px;
