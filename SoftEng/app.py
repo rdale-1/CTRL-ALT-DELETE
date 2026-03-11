@@ -62,7 +62,20 @@ def browse():
 
     params = {"page": page}
 
-    if year:
+    DECADE_MAP = {
+        "2020s": ("2020-01-01", "2029-12-31"),
+        "2010s": ("2010-01-01", "2019-12-31"),
+        "2000s": ("2000-01-01", "2009-12-31"),
+        "1990s": ("1990-01-01", "1999-12-31"),
+        "1980s": ("1980-01-01", "1989-12-31"),
+        "1970s": ("1970-01-01", "1979-12-31"),
+    }
+
+    if year and year in DECADE_MAP:
+        date_gte, date_lte = DECADE_MAP[year]
+        params["primary_release_date.gte"] = date_gte
+        params["primary_release_date.lte"] = date_lte
+    elif year:
         params["primary_release_year"] = year
 
     if rating:
@@ -147,6 +160,10 @@ def random_movie():
     
     random_movie = random.choice(movies)
     return {"movie": random_movie}
+
+@app.route("/auth")
+def auth():
+    return render_template("auth.html")
 
 if __name__ == "__main__":
     app.run(debug=True)

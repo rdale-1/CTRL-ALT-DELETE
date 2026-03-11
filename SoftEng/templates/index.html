@@ -14,10 +14,14 @@
     <header>
         <div class="header-container">
             <a href="/" class="logo">CineSearch</a>
+            <div class="header-auth">
+                <a href="/auth" class="auth-btn-login">Login</a>
+                <a href="/auth" class="auth-btn-register">Register</a>
+            </div>
         </div>
     </header>
 
-    <div class="browse-section">
+    <div class="browse-section filters-section">
         <div class="browse-header">
             <div class="browse-title">Browse By</div>
         </div>
@@ -28,11 +32,11 @@
                 <button class="filter-btn {% if active_year %}filter-btn-active{% endif %}" id="yearBtn">
                     {{ active_year if active_year else 'Year' }} ▾
                 </button>
-                <div class="filter-dropdown" id="yearDropdown">
-                    <div class="filter-grid col-4">
-                        {% for y in range(2026, 1969, -1) %}
-                        <a href="#" class="filter-item {% if active_year == y|string %}filter-active{% endif %}"
-                           data-param="year" data-value="{{ y }}">{{ y }}</a>
+                <div class="filter-dropdown filter-dropdown--narrow" id="yearDropdown">
+                    <div class="filter-grid col-1">
+                        {% for decade in ['2020s', '2010s', '2000s', '1990s', '1980s', '1970s'] %}
+                        <a href="#" class="filter-item {% if active_year == decade %}filter-active{% endif %}"
+                           data-param="year" data-value="{{ decade }}">{{ decade }}</a>
                         {% endfor %}
                     </div>
                 </div>
@@ -111,26 +115,12 @@
         <form action="/search" method="get" class="search-container">
             <input type="text" id="searchInput" name="q" placeholder="Search movies..." class="search-input" autocomplete="off">
             <div id="suggestions" class="suggestions-dropdown"></div>
-            <button type="button" id="randomBtn" class="random-btn">Movie Recommendation</button>
+            <button type="submit" class="search-btn">Search</button>
         </form>
-    </div>
-
-    <!-- Bottom Pagination -->
-    {% if total_pages and total_pages > 1 %}
-    <div class="pagination">
-        {% if current_page > 1 %}
-            <a href="?page=1{% for key, value in request.args.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn pagination-first">First</a>
-            <a href="?page={{ current_page - 1 }}{% for key, value in request.args.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn pagination-prev">← Previous</a>
-        {% endif %}        
-        <div class="pagination-info">
-            Page <span class="current-page">{{ current_page }}</span> of <span class="total-pages">{{ total_pages }}</span>
+        <div class="recommendation-row">
+            <button type="button" id="randomBtn" class="random-btn">Movie Recommendation</button>
         </div>
-        {% if current_page < total_pages %}
-            <a href="?page={{ current_page + 1 }}{% for key, value in request.args.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn pagination-next">Next →</a>
-            <a href="?page={{ total_pages }}{% for key, value in request.args.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn pagination-last">Last</a>
-        {% endif %}
     </div>
-    {% endif %}
 
     <!-- Go to Top Button -->
     <button id="goTopBtn" class="go-top-btn">↑ Top</button>
@@ -191,6 +181,23 @@
             {% endif %}
         </div>
     </div>
+
+    <!-- Bottom Pagination -->
+    {% if total_pages and total_pages > 1 %}
+    <div class="pagination">
+        {% if current_page > 1 %}
+            <a href="?page=1{% for key, value in request.args.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn pagination-first">First</a>
+            <a href="?page={{ current_page - 1 }}{% for key, value in request.args.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn pagination-prev">← Previous</a>
+        {% endif %}        
+        <div class="pagination-info">
+            Page <span class="current-page">{{ current_page }}</span> of <span class="total-pages">{{ total_pages }}</span>
+        </div>
+        {% if current_page < total_pages %}
+            <a href="?page={{ current_page + 1 }}{% for key, value in request.args.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn pagination-next">Next →</a>
+            <a href="?page={{ total_pages }}{% for key, value in request.args.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn pagination-last">Last</a>
+        {% endif %}
+    </div>
+    {% endif %}
 
     <script>
         // ─── Helpers ───────────────────────────────────────────────────────────
@@ -267,7 +274,11 @@
                     dropEl.classList.add('open');
                     btnEl.classList.add('btn-open');
                     const active = dropEl.querySelector('.filter-active');
-                    if (active) setTimeout(() => active.scrollIntoView({ block: 'nearest' }), 350);
+                    if (active) {
+                        setTimeout(() => {
+                            active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                        }, 50);
+                    }
                 }
             });
         });
@@ -354,14 +365,18 @@
                     searchInput.value = data.movie.title;
                     suggestionsDiv.classList.remove('show');
                     searchInput.closest('.search-container').submit();
+                    // Navigation is underway — leave the loading state in place
+                    return;
                 }
+                // API returned no movie — fall through to reset
+                throw new Error('No movie returned');
             } catch (error) {
                 console.error('Error fetching random movie:', error);
-                randomBtn.textContent = 'Random Movie';
-            } finally {
-                randomBtn.disabled = false;
-                randomBtn.textContent = ' Random Movie';
             }
+
+            // Only reached on failure
+            randomBtn.disabled = false;
+            randomBtn.textContent = 'Movie Recommendation';
         });
         
         // Close dropdown when clicking outside
