@@ -237,6 +237,7 @@ nav a:hover::after {
     position: relative;
     overflow: hidden;
     background: linear-gradient(135deg, var(--bg-secondary), rgba(20, 25, 34, 0.6));
+    width: 100%;
 }
 
 .filter-btn::before {
@@ -497,16 +498,12 @@ nav a:hover::after {
     border-bottom: none;
 }
 
-.filter-dropdown-wrapper:nth-child(1) .filter-dropdown {
-    width: 340px;
-}
-
 /* Unified dropdown panel */
 .filter-dropdown {
     display: block;
     max-height: 0;
     overflow: hidden;
-    width: 320px;
+    width: 100%;
     background: var(--bg-card);
     border: 1px solid transparent;
     border-radius: 4px;
@@ -530,7 +527,7 @@ nav a:hover::after {
 }
 
 .filter-dropdown--narrow {
-    width: 180px;
+    width: 100%;
 }
 
 .filter-dropdown--narrow .filter-item {
