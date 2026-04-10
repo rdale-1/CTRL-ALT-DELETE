@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from flask import Flask, render_template, request
 import requests
 from dotenv import load_dotenv
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 load_dotenv()
 
@@ -36,6 +38,58 @@ POPULAR_LABELS = {
     "all-time":   "All Time",
     "most-voted": "Most Voted",
 }
+
+def get_content_recommendations(target_movie_id, target_overview, genre_id):
+    if not API_KEY or not genre_id:
+        return []
+
+    candidate_movies = []
+    try:
+        for page in range(1, 4):
+            url = (
+                f"{BASE_URL}/discover/movie?api_key={API_KEY}"
+                f"&with_genres={genre_id}&page={page}&sort_by=popularity.desc&vote_count.gte=10"
+            )
+            data = requests.get(url, timeout=10).json()
+            results = data.get("results", [])
+            if not results:
+                break
+            candidate_movies.extend(results)
+            if len(candidate_movies) >= 45:
+                break
+    except Exception:
+        return []
+
+    records = []
+    texts = []
+    for movie in candidate_movies:
+        if movie.get("id") == target_movie_id:
+            continue
+        title = movie.get("title", "")
+        overview = movie.get("overview", "")
+        combined = f"{title} {overview}".strip()
+        if not combined:
+            combined = title or ""
+        records.append(movie)
+        texts.append(combined)
+
+    if not records:
+        return []
+
+    target_text = target_overview or ""
+    corpus = [target_text] + texts
+    try:
+        vectorizer = TfidfVectorizer(stop_words="english")
+        tfidf_matrix = vectorizer.fit_transform(corpus)
+        similarity_scores = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:]).flatten()
+    except Exception:
+        return []
+
+    scored_movies = list(zip(similarity_scores, records))
+    scored_movies.sort(key=lambda item: item[0], reverse=True)
+
+    recommended = [movie for score, movie in scored_movies[:4]]
+    return recommended
 
 @app.route("/")
 def home():
@@ -202,8 +256,18 @@ def movie_details(movie_id):
         "budget": response.get("budget", 0),
         "revenue": response.get("revenue", 0),
     }
+
+    primary_genre_id = None
+    if genres:
+        primary_genre_id = genres[0].get("id")
+
+    recommendations = get_content_recommendations(
+        target_movie_id=movie_id,
+        target_overview=response.get("overview", ""),
+        genre_id=primary_genre_id,
+    )
     
-    return render_template("details.html", movie=movie_data)
+    return render_template("details.html", movie=movie_data, recommendations=recommendations)
 
 @app.route("/api/search-suggestions")
 def search_suggestions():

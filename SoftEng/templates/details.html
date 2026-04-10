@@ -246,6 +246,20 @@
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
         }
 
+        .recommendations-section {
+            margin-top: 2.5rem;
+        }
+
+        .recommendations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .recommendation-card .movie-poster {
+            border-radius: 12px;
+        }
+
         .cast-name {
             font-size: 1rem;
             font-weight: 700;
@@ -442,6 +456,38 @@
                 {% endif %}
             </div>
         </div>
+
+        {% if recommendations %}
+        <div class="section recommendations-section">
+            <div class="section-title">Because you liked this (AI Recommended)</div>
+            <div class="recommendations-grid">
+                {% for rec in recommendations %}
+                <a href="/movie/{{ rec.id }}" class="movie-card-link recommendation-card">
+                    <div class="movie-card">
+                        <img
+                            src="{% if rec.poster_path %}https://image.tmdb.org/t/p/w500{{ rec.poster_path }}{% else %}https://via.placeholder.com/500x750?text=No+Poster{% endif %}"
+                            alt="{{ rec.title }}"
+                            class="movie-poster"
+                        >
+                        <div class="movie-info">
+                            <h3 class="movie-title">{{ rec.title }}</h3>
+                            <div class="movie-meta">
+                                <div class="movie-stats">
+                                    <span class="stat-icon">📅</span>
+                                    <span class="stat-value">{{ rec.release_date[:4] if rec.release_date else 'N/A' }}</span>
+                                </div>
+                                <div class="movie-stats">
+                                    <span class="stat-icon">❤️</span>
+                                    <span class="stat-value">{{ rec.vote_average or 0 }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 
 </body>
