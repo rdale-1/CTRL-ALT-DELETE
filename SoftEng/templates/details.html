@@ -283,6 +283,166 @@
             border: 1px solid var(--border-color);
         }
 
+        .flash-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+            margin-bottom: 2rem;
+        }
+
+        .flash-message {
+            padding: 1rem 1.2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+        }
+
+        .flash-message.success {
+            border-color: rgba(76, 175, 80, 0.4);
+            color: #c8f7d1;
+        }
+
+        .flash-message.error {
+            border-color: rgba(255, 107, 53, 0.5);
+            color: #ffd5c8;
+        }
+
+        .flash-message.info {
+            border-color: rgba(247, 147, 30, 0.4);
+            color: #ffe0b2;
+        }
+
+        .reviews-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.9fr);
+            gap: 2rem;
+            margin-top: 2.5rem;
+        }
+
+        .reviews-list,
+        .review-form-card,
+        .review-empty {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .reviews-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .review-card {
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            background: rgba(20, 25, 34, 0.7);
+            padding: 1.2rem;
+        }
+
+        .review-card-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.75rem;
+        }
+
+        .review-author {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .review-meta {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .review-stars {
+            color: #ffd166;
+            letter-spacing: 0.08rem;
+            font-size: 0.95rem;
+        }
+
+        .review-text {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            white-space: pre-wrap;
+        }
+
+        .review-form-card {
+            align-self: start;
+        }
+
+        .review-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .review-form label {
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 0.4rem;
+            display: block;
+        }
+
+        .review-form select,
+        .review-form textarea {
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 0.9rem 1rem;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+        }
+
+        .review-form textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .review-form select:focus,
+        .review-form textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+
+        .review-submit {
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding: 0.95rem 1.2rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .review-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 24px rgba(255, 107, 53, 0.32);
+        }
+
+        .review-helper {
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
         .no-cast {
             color: var(--text-muted);
             font-style: italic;
@@ -320,6 +480,10 @@
             .cast-list {
                 grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             }
+
+            .reviews-layout {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 640px) {
@@ -344,6 +508,11 @@
                 grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
                 gap: 1rem;
             }
+
+            .review-card-header {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
         }
     </style>
 </head>
@@ -353,13 +522,36 @@
         <div class="header-container">
             <a href="/" class="logo">CineSearch</a>
             <div class="header-auth">
+                {% if session.get('user_id') %}
+                <div class="account-dropdown">
+                    <button type="button" class="account-trigger">My Account</button>
+                    <div class="account-menu">
+                        <a href="{{ url_for('home') }}">Home</a>
+                        <a href="{{ url_for('profile') }}">Profile</a>
+                        <a href="{{ url_for('favorites') }}">Favorites</a>
+                        <a href="{{ url_for('my_reviews') }}">Reviews</a>
+                        <a href="{{ url_for('logout') }}">Sign Out</a>
+                    </div>
+                </div>
+                {% else %}
                 <a href="/auth" class="auth-btn-login">Login</a>
                 <a href="/auth" class="auth-btn-register">Register</a>
+                {% endif %}
             </div>
         </div>
     </header>
 
     <div class="details-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-stack">
+                {% for category, message in messages %}
+                <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
         <a href="/" class="back-button">Back to Home</a>
 
         <div class="movie-details-wrapper">
@@ -381,6 +573,25 @@
                         <div class="rating-desc">Out of 10</div>
                     </div>
                 </div>
+
+                {% if session.get('user_id') %}
+                    {% if is_favorite %}
+                    <form action="/remove_favorite/{{ movie.id }}" method="POST">
+                        <button type="submit" class="auth-btn-login" style="width: 100%; background: transparent; cursor: pointer;">
+                            Remove from Favorites
+                        </button>
+                    </form>
+                    {% else %}
+                    <form action="/add_favorite" method="POST">
+                        <input type="hidden" name="movie_id" value="{{ movie.id }}">
+                        <input type="hidden" name="title" value="{{ movie.title }}">
+                        <input type="hidden" name="poster_path" value="{{ movie.poster_path or '' }}">
+                        <button type="submit" class="auth-btn-register" style="width: 100%; border: none; cursor: pointer;">
+                            Add to Favorites
+                        </button>
+                    </form>
+                    {% endif %}
+                {% endif %}
             </div>
 
             <!-- Content Section -->
@@ -488,6 +699,64 @@
             </div>
         </div>
         {% endif %}
+
+        <div class="section reviews-section">
+            <div class="section-title">User Reviews</div>
+            <div class="reviews-layout">
+                <div>
+                    {% if movie_reviews %}
+                    <div class="reviews-list">
+                        {% for review in movie_reviews %}
+                        <article class="review-card">
+                            <div class="review-card-header">
+                                <div>
+                                    <div class="review-author">{{ review.user.name if review.user else "Anonymous User" }}</div>
+                                    <div class="review-meta">
+                                        <span class="review-stars">{{ "★" * review.rating }}{{ "☆" * (5 - review.rating) }}</span>
+                                        <span>{{ review.created_at.strftime("%b %d, %Y") }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="review-text">{{ review.review_text }}</p>
+                        </article>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="review-empty">
+                        <p class="review-helper">No reviews yet for this movie. Be the first to share what you thought.</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <aside class="review-form-card">
+                    {% if session.get('user_id') %}
+                    <form action="/submit_review/{{ movie.id }}" method="POST" class="review-form">
+                        <div>
+                            <label for="rating">Your Rating</label>
+                            <select id="rating" name="rating" required>
+                                <option value="">Choose a rating</option>
+                                <option value="5">5 Stars</option>
+                                <option value="4">4 Stars</option>
+                                <option value="3">3 Stars</option>
+                                <option value="2">2 Stars</option>
+                                <option value="1">1 Star</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="review_text">Your Review</label>
+                            <textarea id="review_text" name="review_text" placeholder="What stood out to you about this movie?" required></textarea>
+                        </div>
+
+                        <input type="hidden" name="movie_title" value="{{ movie.title }}">
+                        <button type="submit" class="review-submit">Submit Review</button>
+                    </form>
+                    {% else %}
+                    <p class="review-helper">Log in to leave a review.</p>
+                    {% endif %}
+                </aside>
+            </div>
+        </div>
     </div>
 
 </body>

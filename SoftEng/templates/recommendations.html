@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recommended Movies - CineSearch</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .recommendations-page {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 3rem 2rem 4rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .recommendations-hero {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .recommendations-eyebrow {
+            color: var(--accent-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.18rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .recommendations-subtitle {
+            max-width: 700px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .recommendation-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .recommendation-card {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+        }
+
+        .recommendation-action-form {
+            display: flex;
+        }
+
+        .recommendation-action-btn {
+            width: 100%;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.9rem 1rem;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.05rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .recommendation-action-btn.add {
+            border: none;
+            color: white;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        }
+
+        .recommendation-action-btn.add:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 24px rgba(255, 107, 53, 0.3);
+        }
+
+        .recommendation-action-btn.remove {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+        }
+
+        .recommendation-action-btn.remove:hover {
+            background: rgba(255, 107, 53, 0.08);
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .flash-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Standalone page layout; this template uses a repeated shell instead of template inheritance. -->
+    <header>
+        <div class="header-container">
+            <a href="/" class="logo">CineSearch</a>
+            <div class="header-auth">
+                {# Session-aware navigation keeps the recommendations page consistent with the rest of the application. #}
+                {% if session.get('user_id') %}
+                <div class="account-dropdown">
+                    <button type="button" class="account-trigger">My Account</button>
+                    <div class="account-menu">
+                        <a href="{{ url_for('home') }}">Home</a>
+                        <a href="{{ url_for('profile') }}">Profile</a>
+                        <a href="{{ url_for('favorites') }}">Favorites</a>
+                        <a href="{{ url_for('my_reviews') }}">Reviews</a>
+                        <a href="{{ url_for('logout') }}">Sign Out</a>
+                    </div>
+                </div>
+                {% else %}
+                <a href="/auth" class="auth-btn-login">Login</a>
+                <a href="/auth" class="auth-btn-register">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- Main recommendation workspace; CSS grid keeps cards responsive across desktop and mobile widths. -->
+    <main class="recommendations-page">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-stack">
+                {% for category, message in messages %}
+                <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- The hero section explains the content-based rationale derived from the user's favorite-history profile. -->
+        <div class="recommendations-hero">
+            <div class="recommendations-eyebrow">Smart Picks</div>
+            <h2 class="section-title">Because you love {{ top_genre_name }} movies...</h2>
+            <p class="recommendations-subtitle">
+                We analyzed {{ sampled_favorites_count }} of your recent favorites, blended their story themes and genre signals into one profile, and ranked movies by content similarity.
+                {% if profile_genre_names %}
+                Your strongest signals right now are {{ profile_genre_names|join(', ') }}.
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- This loop renders each recommended TMDB movie payload into a card with in-place favorite controls. -->
+        <section class="recommendation-results">
+            {% for movie in recommended_movies %}
+            <div class="recommendation-card">
+                <a href="/movie/{{ movie.id }}" class="movie-card-link">
+                    <div class="movie-card">
+                        <img
+                            src="{% if movie.poster_path %}https://image.tmdb.org/t/p/w500{{ movie.poster_path }}{% else %}https://via.placeholder.com/500x750?text=No+Poster+Available{% endif %}"
+                            alt="{{ movie.title }}"
+                            class="movie-poster"
+                        >
+                        <div class="movie-info">
+                            <h3 class="movie-title">{{ movie.title or 'Untitled' }}</h3>
+                            <div class="movie-meta">
+                                <div class="movie-stats">
+                                    <span class="stat-icon">Year</span>
+                                    <span class="stat-value">{{ movie.release_date[:4] if movie.release_date else 'N/A' }}</span>
+                                </div>
+                                <div class="movie-stats">
+                                    <span class="stat-icon">Score</span>
+                                    <span class="stat-value">{{ "%.1f"|format(movie.vote_average or 0) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+
+                {# Conditional Jinja logic keeps the action button synchronized with the user's local favorites state. #}
+                {% if movie.id in favorited_movie_ids %}
+                <form action="{{ url_for('remove_favorite', movie_id=movie.id) }}" method="POST" class="recommendation-action-form">
+                    <button type="submit" class="recommendation-action-btn remove">Remove from Favorites</button>
+                </form>
+                {% else %}
+                <form action="{{ url_for('add_favorite') }}" method="POST" class="recommendation-action-form">
+                    <input type="hidden" name="movie_id" value="{{ movie.id }}">
+                    <input type="hidden" name="title" value="{{ movie.title or 'Untitled' }}">
+                    <input type="hidden" name="poster_path" value="{{ movie.poster_path or '' }}">
+                    <button type="submit" class="recommendation-action-btn add">Add to Favorites</button>
+                </form>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </section>
+    </main>
+
+</body>
+</html>

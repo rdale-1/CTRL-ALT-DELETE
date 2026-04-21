@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - CineSearch</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .profile-shell {
+            max-width: 760px;
+            margin: 3rem auto 4rem;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .profile-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+        }
+
+        .profile-heading {
+            margin-bottom: 1.75rem;
+        }
+
+        .profile-heading h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.3rem;
+            letter-spacing: 1.5px;
+            margin-bottom: 0.35rem;
+        }
+
+        .profile-heading p {
+            color: var(--text-muted);
+        }
+
+        .profile-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .profile-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .profile-field label {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .profile-field input,
+        .profile-field select {
+            width: 100%;
+            padding: 0.95rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+        }
+
+        .profile-field input[readonly] {
+            color: var(--text-muted);
+        }
+
+        .profile-field input:focus,
+        .profile-field select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+
+        .profile-submit {
+            align-self: flex-start;
+            padding: 0.9rem 1.4rem;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .profile-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 24px rgba(255, 107, 53, 0.32);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-container">
+            <a href="/" class="logo">CineSearch</a>
+            <div class="header-auth">
+                {% if session.get('user_id') %}
+                <div class="account-dropdown">
+                    <button type="button" class="account-trigger">My Account</button>
+                    <div class="account-menu">
+                        <a href="{{ url_for('home') }}">Home</a>
+                        <a href="{{ url_for('profile') }}">Profile</a>
+                        <a href="{{ url_for('favorites') }}">Favorites</a>
+                        <a href="{{ url_for('my_reviews') }}">Reviews</a>
+                        <a href="{{ url_for('logout') }}">Sign Out</a>
+                    </div>
+                </div>
+                {% else %}
+                <a href="/auth" class="auth-btn-login">Login</a>
+                <a href="/auth" class="auth-btn-register">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main class="profile-shell">
+        <section class="profile-card">
+            <div class="profile-heading">
+                <h1>My Profile</h1>
+                <p>Update your display name and movie taste preferences.</p>
+            </div>
+
+            <form method="POST" action="{{ url_for('profile') }}" class="profile-form">
+                <div class="profile-field">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" value="{{ user.name }}" required>
+                </div>
+
+                <div class="profile-field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" value="{{ user.email }}" readonly>
+                </div>
+
+                <div class="profile-field">
+                    <label for="favorite_genre">Favorite Genre</label>
+                    <select id="favorite_genre" name="favorite_genre">
+                        <option value="">Choose a favorite genre</option>
+                        {% for genre in genres %}
+                        <option value="{{ genre.name }}" {% if user.favorite_genre == genre.name %}selected{% endif %}>
+                            {{ genre.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="profile-submit">Save Changes</button>
+            </form>
+        </section>
+    </main>
+
+</body>
+</html>

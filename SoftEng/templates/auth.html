@@ -517,7 +517,7 @@
             </div>
 
             <!-- ── LOGIN FORM ── -->
-            <div id="loginForm" class="auth-form active">
+            <form id="loginForm" class="auth-form active" method="POST" action="/login">
                 <div class="form-heading">
                     <h1>Welcome Back</h1>
                     <p>Your next favorite film is waiting. <span>Sign in.</span></p>
@@ -526,7 +526,7 @@
                 <div class="field-group">
                     <label for="loginEmail">Email Address</label>
                     <div class="input-wrap">
-                        <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email">
+                        <input type="email" id="loginEmail" name="email" placeholder="you@example.com" autocomplete="email">
                         <span class="input-icon">✉</span>
                     </div>
                 </div>
@@ -534,7 +534,7 @@
                 <div class="field-group">
                     <label for="loginPassword">Password</label>
                     <div class="input-wrap">
-                        <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="current-password">
+                        <input type="password" id="loginPassword" name="password" placeholder="Enter your password" autocomplete="current-password">
                         <span class="input-icon">🔒</span>
                         <button class="toggle-pw" type="button" onclick="togglePw('loginPassword', this)" title="Show/hide password">👁</button>
                     </div>
@@ -544,22 +544,22 @@
                     <a href="#">Forgot password?</a>
                 </div>
 
-                <button class="submit-btn" type="button">Sign In</button>
+                <button class="submit-btn" type="submit">Sign In</button>
 
                 <p class="switch-prompt">Don't have an account? <a onclick="switchTab('register')">Create one</a></p>
-            </div>
+            </form>
 
             <!-- ── REGISTER FORM ── -->
-            <div id="registerForm" class="auth-form">
+            <form id="registerForm" class="auth-form" method="POST" action="/register">
                 <div class="form-heading">
                     <h1>Join CineSearch</h1>
                     <p>Discover films tailored to your <span>taste.</span></p>
                 </div>
 
                 <div class="field-group">
-                    <label for="regName">Full Name</label>
+                    <label for="regName">Nickname</label>
                     <div class="input-wrap">
-                        <input type="text" id="regName" placeholder="Your name" autocomplete="name">
+                        <input type="text" id="regName" name="name" placeholder="Your nickname" autocomplete="nickname">
                         <span class="input-icon">👤</span>
                     </div>
                 </div>
@@ -567,7 +567,7 @@
                 <div class="field-group">
                     <label for="regEmail">Email Address</label>
                     <div class="input-wrap">
-                        <input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email">
+                        <input type="email" id="regEmail" name="email" placeholder="you@example.com" autocomplete="email">
                         <span class="input-icon">✉</span>
                     </div>
                 </div>
@@ -575,7 +575,7 @@
                 <div class="field-group">
                     <label for="regPassword">Password</label>
                     <div class="input-wrap">
-                        <input type="password" id="regPassword" placeholder="Create a strong password" autocomplete="new-password" oninput="checkStrength(this.value)">
+                        <input type="password" id="regPassword" name="password" placeholder="Create a strong password" autocomplete="new-password" oninput="checkStrength(this.value)">
                         <span class="input-icon">🔒</span>
                         <button class="toggle-pw" type="button" onclick="togglePw('regPassword', this)" title="Show/hide password">👁</button>
                     </div>
@@ -590,37 +590,37 @@
                 <div class="field-group">
                     <label for="regGenre">Favorite Movie Genre</label>
                     <div class="input-wrap">
-                        <select id="regGenre">
+                        <select id="regGenre" name="favorite_genre">
                             <option value="" disabled selected>Pick your genre...</option>
-                            <option value="28">🔥 Action</option>
-                            <option value="12">🗺 Adventure</option>
-                            <option value="16">✨ Animation</option>
-                            <option value="35">😄 Comedy</option>
-                            <option value="80">🕵️ Crime</option>
-                            <option value="99">🎥 Documentary</option>
-                            <option value="18">🎭 Drama</option>
-                            <option value="10751">👨‍👩‍👧 Family</option>
-                            <option value="14">🧙 Fantasy</option>
-                            <option value="27">👻 Horror</option>
-                            <option value="9648">🔍 Mystery</option>
-                            <option value="10749">❤️ Romance</option>
-                            <option value="878">🚀 Sci-Fi</option>
-                            <option value="53">😰 Thriller</option>
-                            <option value="10752">⚔️ War</option>
-                            <option value="37">🤠 Western</option>
+                            <option value="28"> Action</option>
+                            <option value="12"> Adventure</option>
+                            <option value="16"> Animation</option>
+                            <option value="35"> Comedy</option>
+                            <option value="80"> Crime</option>
+                            <option value="99"> Documentary</option>
+                            <option value="18"> Drama</option>
+                            <option value="10751"> Family</option>
+                            <option value="14"> Fantasy</option>
+                            <option value="27"> Horror</option>
+                            <option value="9648"> Mystery</option>
+                            <option value="10749"> Romance</option>
+                            <option value="878"> Sci-Fi</option>
+                            <option value="53"> Thriller</option>
+                            <option value="10752"> War</option>
+                            <option value="37"> Western</option>
                         </select>
                         <span class="input-icon" style="left:auto;right:2.5rem;pointer-events:none;"></span>
                     </div>
                 </div>
 
-                <button class="submit-btn" type="button">Create Account</button>
+                <button class="submit-btn" type="submit">Create Account</button>
 
                 <p class="terms-note">
                     By signing up you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
                 </p>
 
                 <p class="switch-prompt">Already have an account? <a onclick="switchTab('login')">Sign in</a></p>
-            </div>
+            </form>
 
         </div>
     </div>

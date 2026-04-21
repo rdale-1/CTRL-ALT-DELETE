@@ -11,16 +11,32 @@
 </head>
 <body>
 
+    <!-- Primary page shell for the landing, search, and browse experience. -->
     <header>
         <div class="header-container">
             <a href="/" class="logo">CineSearch</a>
             <div class="header-auth">
+                {# Session-aware navigation swaps account controls for guests and authenticated users. #}
+                {% if session.get('user_id') %}
+                <div class="account-dropdown">
+                    <button type="button" class="account-trigger">My Account</button>
+                    <div class="account-menu">
+                        <a href="{{ url_for('home') }}">Home</a>
+                        <a href="{{ url_for('profile') }}">Profile</a>
+                        <a href="{{ url_for('favorites') }}">Favorites</a>
+                        <a href="{{ url_for('my_reviews') }}">Reviews</a>
+                        <a href="{{ url_for('logout') }}">Sign Out</a>
+                    </div>
+                </div>
+                {% else %}
                 <a href="/auth" class="auth-btn-login">Login</a>
                 <a href="/auth" class="auth-btn-register">Register</a>
+                {% endif %}
             </div>
         </div>
     </header>
 
+    <!-- Responsive filter toolbar; each control maps to server-side browse parameters. -->
     <div class="browse-section filters-section">
         <div class="browse-header">
             <div class="browse-title">Browse By</div>
@@ -33,6 +49,7 @@
                     {{ active_year if active_year else 'Year' }} ▾
                 </button>
                 <div class="filter-dropdown filter-dropdown--narrow" id="yearDropdown">
+                    {# The loop renders decade options for responsive filtering. #}
                     <div class="filter-grid col-1">
                         {% for decade in ['2020s', '2010s', '2000s', '1990s', '1980s', '1970s'] %}
                         <a href="#" class="filter-item {% if active_year == decade %}filter-active{% endif %}"
@@ -84,6 +101,7 @@
                     {{ active_genre_name if active_genre_name else 'Genre' }} ▾
                 </button>
                 <div class="filter-dropdown" id="genreDropdown">
+                    {# The genre loop iterates over the metadata payload passed from Flask. #}
                     <div class="filter-grid col-3">
                         {% for genre in genres %}
                         <a href="#" class="filter-item {% if active_genre == genre.id|string %}filter-active{% endif %}"
@@ -95,7 +113,7 @@
 
         </div>
 
-        <!-- Active filter chips -->
+        <!-- Active filter chips provide a concise summary of the current filter state. -->
         {% if active_year or active_rating or active_popular or active_genre %}
         <div class="active-chips">
             {% if active_year %}
@@ -111,21 +129,33 @@
         {% endif %}
     </div>
 
-        <div class="browse-section">
+    <!-- Search and recommendation actions are grouped into a compact responsive control row. -->
+    <div class="browse-section">
         <form action="/search" method="get" class="search-container">
             <input type="text" id="searchInput" name="q" placeholder="Search movies..." class="search-input" autocomplete="off">
             <div id="suggestions" class="suggestions-dropdown"></div>
             <button type="submit" class="search-btn">Search</button>
         </form>
         <div class="recommendation-row">
-            <button type="button" id="randomBtn" class="random-btn">Movie Recommendation</button>
+            <a href="{{ url_for('recommendations') }}" class="btn random-btn">Recommended Movies</a>
         </div>
     </div>
 
     <!-- Go to Top Button -->
     <button id="goTopBtn" class="go-top-btn">↑ Top</button>
 
+    <!-- Main content region renders TMDB movie payloads, flash messages, and fallback states. -->
     <div class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-stack flash-stack-home">
+            {% for category, message in messages %}
+            <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
         {% if error %}
         <div style="background: rgba(255, 107, 53, 0.1); border: 1px solid var(--accent-primary); color: var(--accent-primary); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; max-width: 1400px; margin-left: auto; margin-right: auto;">
             <strong>⚠️ Error:</strong> {{ error }}
@@ -137,6 +167,7 @@
 
         <div class="section-header">
             <h2 class="section-title">
+                {# The title is computed dynamically to reflect browse filters or search context. #}
                 {% if active_year or active_rating or active_popular or active_genre %}
                     {% set parts = [] %}
                     {% if active_year %}{% set _ = parts.append(active_year) %}{% endif %}
@@ -154,6 +185,7 @@
 
         <div class="movie-grid">
             {% if movies %}
+                {# This loop transforms each movie object from the TMDB payload into a responsive card. #}
                 {% for movie in movies %}
                 <a href="/movie/{{ movie.id }}" class="movie-card-link">
                     <div class="movie-card">
@@ -195,6 +227,7 @@
 
     <!-- Bottom Pagination -->
     {% if total_pages and total_pages > 1 %}
+    <!-- Pagination preserves query arguments so the filtered dataset remains stable across pages. -->
     <div class="pagination">
         {% if current_page > 1 %}
             <a href="?page=1{% for key, value in request.args.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn pagination-first">First</a>
@@ -211,6 +244,8 @@
     {% endif %}
 
     <script>
+        // Client-side behaviors enhance responsiveness while leaving the core
+        // page rendering and data composition to the Flask/Jinja2 layer.
         // ─── Helpers ───────────────────────────────────────────────────────────
         function getParams() {
             return new URLSearchParams(window.location.search.slice(
@@ -358,36 +393,6 @@
             } catch (error) {
                 console.error('Error fetching suggestions:', error);
             }
-        });
-        
-        // ─── Random Movie Button ───────────────────────────────────────────
-        const randomBtn = document.getElementById('randomBtn');
-        
-        randomBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            randomBtn.disabled = true;
-            randomBtn.textContent = '⏳ Loading...';
-            
-            try {
-                const response = await fetch('/api/random-movie');
-                const data = await response.json();
-                
-                if (data.movie && data.movie.title) {
-                    searchInput.value = data.movie.title;
-                    suggestionsDiv.classList.remove('show');
-                    searchInput.closest('.search-container').submit();
-                    // Navigation is underway — leave the loading state in place
-                    return;
-                }
-                // API returned no movie — fall through to reset
-                throw new Error('No movie returned');
-            } catch (error) {
-                console.error('Error fetching random movie:', error);
-            }
-
-            // Only reached on failure
-            randomBtn.disabled = false;
-            randomBtn.textContent = 'Movie Recommendation';
         });
         
         // Close dropdown when clicking outside

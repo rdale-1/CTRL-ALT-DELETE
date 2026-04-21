@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Favorites - CineSearch</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+    <header>
+        <div class="header-container">
+            <a href="/" class="logo">CineSearch</a>
+            <div class="header-auth">
+                {% if session.get('user_id') %}
+                <div class="account-dropdown">
+                    <button type="button" class="account-trigger">My Account</button>
+                    <div class="account-menu">
+                        <a href="{{ url_for('home') }}">Home</a>
+                        <a href="{{ url_for('profile') }}">Profile</a>
+                        <a href="{{ url_for('favorites') }}">Favorites</a>
+                        <a href="{{ url_for('my_reviews') }}">Reviews</a>
+                        <a href="{{ url_for('logout') }}">Sign Out</a>
+                    </div>
+                </div>
+                {% else %}
+                <a href="/auth" class="auth-btn-login">Login</a>
+                <a href="/auth" class="auth-btn-register">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <div class="main-content" style="padding-top: 3rem;">
+        <div class="section-header">
+            <h1 class="section-title">My Favorite Movies</h1>
+        </div>
+
+        <div class="movie-grid">
+            {% if favorites %}
+                {% for favorite in favorites %}
+                <div class="favorites-card-item">
+                    <a href="/movie/{{ favorite.movie_id }}" class="movie-card-link">
+                        <div class="movie-card">
+                            <img
+                                src="{% if favorite.poster_path %}https://image.tmdb.org/t/p/w500{{ favorite.poster_path }}{% else %}https://via.placeholder.com/500x750?text=No+Poster+Available{% endif %}"
+                                alt="{{ favorite.title }}"
+                                class="movie-poster"
+                            >
+                            <div class="movie-info">
+                                <h3 class="movie-title">{{ favorite.title }}</h3>
+                            </div>
+                        </div>
+                    </a>
+                    <form action="/remove_favorite/{{ favorite.movie_id }}" method="POST" class="favorites-action-form">
+                        <button type="submit" class="favorites-remove-btn">Remove</button>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-results">
+                    <p>You have not added any favorites yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+</body>
+</html>
